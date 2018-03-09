@@ -128,14 +128,8 @@ if __name__ == "__main__":
 	# calculate forwarding rule atomic predicates
 	f_aps = atomic_predicates(["11*", "101*", "10*"])
 	
-	# calculate acl atomic predicates
-	acl_aps = atomic_predicates(["1001*"])
-
 	# print the atomic predicates
 
 	print "\nForwarding Rule APs"
 	print_aps(f_aps)
-	print "\n--------------------"
-	print "\nACL Rule APs"
-	print_aps(acl_aps)
 	print "\n--------------------"

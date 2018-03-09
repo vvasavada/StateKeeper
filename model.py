@@ -6,14 +6,13 @@ from collections import defaultdict
 class Port:
 	'''
 	This class represents a port.
-	Port has Id, ACLs, Forwarding Rules, connecting ports, and input atomic predicates (output of prior port in the path)
+	Port has Id,Forwarding Rules, connecting ports, and input atomic predicates (output of prior port in the path)
 	'''
-	def __init__(self, id, acl=[], fr=[], nxt={}):
+	def __init__(self, id, fr=[], nxt={}):
 		self.id = id
-		self.acl = acl
 		self.fr = fr
 		self.next = nxt  # {porti:{throughput: x, delay:y}, portj:{throughput: m, delay:n}}  throughput in Mbps, delay in ms
-		self.input = None  # {fr: ___ , acl: ____, total_throughput, total_delay}
+		self.input = None  # {fr: ___ , total_throughput, total_delay}
 
 	def output(self):
 		'''
@@ -25,12 +24,7 @@ class Port:
 			if not self.input:
 				print self.id
 			output_fr = self.input["fr"]
-		if self.acl:
-			output_acl = list(set(self.acl).intersection(self.input["acl"]))
-		else:
-			output_acl = self.input["acl"]
-
-		return {"fr": output_fr, "acl": output_acl}
+		return {"fr": output_fr}
 
 	def set_inputs(self):
 		'''
@@ -50,7 +44,6 @@ class Port:
 		result = "Port #"
 		result += str(self.id) + "\n"
 		result += "Input: " + str(self.input) + "\n"
-		result += "S(A): " + str(self.acl) + "\n"
 		result += "S(F): " + str(self.fr) + "\n"
 		result += "Output: " + str(self.output()) + "\n"
 		result += "Total Delay: " + str(self.input["total_delay"])
@@ -111,11 +104,11 @@ if __name__ == "__main__":
 	print "\n"
 
 	# Create the ports
-	# Port -> id, forwarding rules, ACLs, Next (ports connected to) with delay and throughput
+	# Port -> id, forwarding rules, Next (ports connected to) with delay and throughput
 
 	p11 = Port(11)
 	p10 = Port(10, nxt={p11:{"delay": 0}})
-	p9 = Port(9, acl=[0], nxt={p11:{"delay": 0}})
+	p9 = Port(9, nxt={p11:{"delay": 0}})
 	p8 = Port(8, fr=[0], nxt={p10:{"delay": 1}})
 	p7 = Port(7, nxt={p8:{"delay": 0}})
 	p6 = Port(6, nxt={p9:{"delay": 1}})
@@ -142,7 +135,7 @@ if __name__ == "__main__":
 
 	# Give initial input to port 1 (all atomic predicates and total delay set to 0)
 
-	p1.input = {"fr": [0, 1, 2, 3], "acl": [0, 1], "total_delay": 0}
+	p1.input = {"fr": [0, 1, 2, 3], "total_delay": 0}
 
 	# Print reachability tree which is basically Depth First Search
 	network.print_paths(p1.id, p11.id)
