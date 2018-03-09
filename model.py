@@ -1,4 +1,3 @@
-  
 from collections import defaultdict
 
 
@@ -34,8 +33,10 @@ class Port:
 			port.input = self.output()
 
 			total_delay = self.input["total_delay"] + self.next[port]["delay"]
-
 			port.input["total_delay"] = total_delay
+
+			total_throughput = min(self.input["total_throughput"], self.next[port]["throughput"])
+			port.input["total_throughput"] = total_throughput
 
 	def __str__(self):
 		'''
@@ -46,7 +47,8 @@ class Port:
 		result += "Input: " + str(self.input) + "\n"
 		result += "S(F): " + str(self.fr) + "\n"
 		result += "Output: " + str(self.output()) + "\n"
-		result += "Total Delay: " + str(self.input["total_delay"])
+		result += "Total Delay: " + str(self.input["total_delay"]) + "\n"
+		result += "Total Throughput: " + str(self.input["total_throughput"])
 
 		return result
 
@@ -107,16 +109,16 @@ if __name__ == "__main__":
 	# Port -> id, forwarding rules, Next (ports connected to) with delay and throughput
 
 	p11 = Port(11)
-	p10 = Port(10, nxt={p11:{"delay": 0}})
-	p9 = Port(9, nxt={p11:{"delay": 0}})
-	p8 = Port(8, fr=[0], nxt={p10:{"delay": 1}})
-	p7 = Port(7, nxt={p8:{"delay": 0}})
-	p6 = Port(6, nxt={p9:{"delay": 1}})
+	p10 = Port(10, nxt={p11:{"delay": 0, "throughput": 10}})
+	p9 = Port(9, nxt={p11:{"delay": 0, "throughput": 5}})
+	p8 = Port(8, fr=[0], nxt={p10:{"delay": 1, "throughput": 10}})
+	p7 = Port(7, nxt={p8:{"delay": 0, "throughput": 5}})
+	p6 = Port(6, nxt={p9:{"delay": 1, "throughput": 5}})
 	p5 = Port(5, fr=[2])
-	p4 = Port(4, nxt={p5:{"delay": 0}, p6:{"delay": 0}})
-	p3 = Port(3, fr=[0], nxt={p7:{"delay": 1}})
-	p2 = Port(2, fr=[2, 3], nxt={p4:{"delay": 1}})
-	p1 = Port(1, nxt={p2:{"delay": 0}, p3:{"delay": 0}})
+	p4 = Port(4, nxt={p5:{"delay": 0, "throughput": 10}, p6:{"delay": 0, "throughput": 10}})
+	p3 = Port(3, fr=[0], nxt={p7:{"delay": 1, "throughput": 5}})
+	p2 = Port(2, fr=[2, 3], nxt={p4:{"delay": 1, "throughput": 10}})
+	p1 = Port(1, nxt={p2:{"delay": 0, "throughput": 10}, p3:{"delay": 0, "throughput": 10}})
 
 	# Build the network graph
 
@@ -135,7 +137,7 @@ if __name__ == "__main__":
 
 	# Give initial input to port 1 (all atomic predicates and total delay set to 0)
 
-	p1.input = {"fr": [0, 1, 2, 3], "total_delay": 0}
+	p1.input = {"fr": [0, 1, 2, 3], "total_delay": 0, "total_throughput": 10}
 
 	# Print reachability tree which is basically Depth First Search
 	network.print_paths(p1.id, p11.id)
