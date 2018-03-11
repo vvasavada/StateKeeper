@@ -21,19 +21,17 @@ def complement(prefix):
 	0* -> [1*]
 	10* -> [0**, *1*]
 	'''
+	neg = {"0": "1", "1": "0"}
 	result = []
 	star_str = "*" * len(prefix)
 	i = 0
-	ch = prefix[i]
-	while ch != "*":
-		if ch == "1":
-			s = star_str[:i] + "0" + star_str[i + 1:]
-		else:
-			s = star_str[:i] + "1" + star_str[i + 1:]
-		result.append(s)
+	while i != len(prefix):
+		ch = prefix[i]
+		if ch != "*":
+			s = star_str[:i] + neg[ch] + star_str[i+1:]
+			result.append(s)
 		star_str = "*" * len(prefix)
 		i += 1
-		ch = prefix[i]
 	return result
 
 def _intersection(bit1, bit2):
@@ -71,65 +69,53 @@ def intersection(prefix1, prefix2):
 
 	return result
 
+def difference(prefix1, prefix2):
+	'''
+	Gives difference: prefix2 - prefix1
+	ASSUMPTION: Prefix1 is only has 1 digit and rest stars
+	'''
+	return intersection(prefix2, complement(prefix1)[0])
+
 def atomic_predicates(prefixes):
 	'''
-	Gives atomic predicates of the given prefixes
+	Gives atomic predicate set for given list of prefixes
 	'''
-
-	# Sort the prefixes based on their length in increasing order
+	# Sort prefixes based on increasing length
 	prefixes.sort(key=len)
 
-	# Get the {P, not (P)} for each prefix
-	pairs = []
+	# Calculate atomic predicates for each prefix
+	groups = []
 	for prefix in prefixes:
-		pairs.append([prefix] + complement(prefix))
-
-	# if there is only one prefix, {P, not (P)}
-	#  will be the set of atomic predicates
-	if len(pairs) == 1:
-		return [pairs[0][0], list(pairs[0][1:])]
-
-	# Take first pair and intersect it with second pair
-	# Take the resulting set and intersect it with third pair and so on...
-	# However, this might also generate two intersecting prefixes (e.g. 0** and 01*)
-	# in the resulting set. Hence, keep the bigger of the two and get rid of the other
-	# (here, keep 0** and get rid of 01*). In case where they represent same size universe, 
-	# keep them as union (e.g. {1001*, [0****, *1***, **1**, ***0*]})
-	result = pairs[0]
+		result = [prefix]
+		complement_list = complement(prefix)
+		if len(complement_list) == 1:
+			result += complement_list
+		else:
+			result += [complement_list[0]]
+			for i in range(1, len(complement_list)):
+				diff = complement_list[i]
+				for j in range(i):
+					diff = difference(complement_list[j], diff)
+				result += [diff]
+		groups.append(result)
+	
+	# Intersect the atomic predicate sets to get final result
+	result = groups[0]
 	temp = []
-	for i in range(1, len(pairs)):
+	for i in range(1, len(groups)):
 		for j in range(len(result)):
-			for k in range(len(pairs[i])):
-				retval = intersection(result[j], pairs[i][k])
+			for k in range(len(groups[i])):
+				retval = intersection(result[j], groups[i][k])
 				if retval != "z":
-					append = True
-					for l in range(len(temp)):
-						if type(temp[l]) != list:
-							if intersection(temp[l], retval) != "z":
-								append = False
-								if len(retval) - retval.count("*") < len(temp[l]) - temp[l].count("*"):
-									temp[l] = retval
-								elif len(retval) - retval.count("*") == len(temp[l]) - temp[l].count("*"):
-									temp[l] = [temp[l]] + [retval]
-						else:
-							if intersection(temp[l][0], retval) != "z":
-								append = False
-								if len(retval) - retval.count("*") < len(temp[l]) - temp[l].count("*"):
-									temp[l] = retval
-								elif len(retval) - retval.count("*") == len(temp[l]) - temp[l].count("*"):
-									temp[l].append(retval)
-					if append:
-					    temp.append(retval)
+					temp.append(retval)
 		result = temp[:]
 		temp = []
 	return result
 
 if __name__ == "__main__":
-	# calculate forwarding rule atomic predicates
-	f_aps = atomic_predicates(["11*", "101*", "10*"])
-	
-	# print the atomic predicates
+    # calculate forwarding rule atomic predicates
+    f_aps = atomic_predicates(["1**", "10*", "110*"])
 
-	print "\nForwarding Rule APs"
-	print_aps(f_aps)
-	print "\n--------------------"
+    print "\nForwarding Rule APs"
+    print_aps(f_aps)
+    print "\n--------------------"

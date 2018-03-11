@@ -2,6 +2,23 @@ from collections import defaultdict
 
 
 ############################## NETWORK TOPOLOGY ##################################
+class Destination:
+	def __init__(self, id):
+		self.id = id
+		self.input = None  # {fr: ___ , total_throughput, total_delay}
+
+	def __str__(self):
+		'''
+		String representation of Port class
+		'''
+		result = "Destination #"
+		result += str(self.id) + "\n"
+		result += "Output FR: " + str(self.input["fr"]) + "\n"
+		result += "Total Delay: " + str(self.input["total_delay"]) + "\n"
+		result += "Total Throughput: " + str(self.input["total_throughput"])
+
+		return result
+
 class Port:
 	'''
 	This class represents a port.
@@ -29,14 +46,14 @@ class Port:
 		'''
 		Set inputs for the next connecting ports in the path
 		'''
-		for port in self.next:
-			port.input = self.output()
+		for node in self.next:
+			node.input = self.output()
 
-			total_delay = self.input["total_delay"] + self.next[port]["delay"]
-			port.input["total_delay"] = total_delay
+			total_delay = self.input["total_delay"] + self.next[node]["delay"]
+			node.input["total_delay"] = total_delay
 
-			total_throughput = min(self.input["total_throughput"], self.next[port]["throughput"])
-			port.input["total_throughput"] = total_throughput
+			total_throughput = min(self.input["total_throughput"], self.next[node]["throughput"])
+			node.input["total_throughput"] = total_throughput
 
 	def __str__(self):
 		'''
@@ -46,7 +63,7 @@ class Port:
 		result += str(self.id) + "\n"
 		result += "Input: " + str(self.input) + "\n"
 		result += "S(F): " + str(self.fr) + "\n"
-		result += "Output: " + str(self.output()) + "\n"
+		result += "Output FR: " + str(self.output()["fr"]) + "\n"
 		result += "Total Delay: " + str(self.input["total_delay"]) + "\n"
 		result += "Total Throughput: " + str(self.input["total_throughput"])
 
@@ -73,7 +90,8 @@ class Network:
 	def _print_paths(self, u, d, visited, path):
 		visited[u-1] = True
 		port = self.ports[u]
-		port.set_inputs()
+		if port.__class__ == Port:
+			port.set_inputs()
 		path.append(port)
 		if u == d:
 			for port in path:
@@ -108,7 +126,7 @@ if __name__ == "__main__":
 	# Create the ports
 	# Port -> id, forwarding rules, Next (ports connected to) with delay and throughput
 
-	p11 = Port(11)
+	'''p11 = Port(11)
 	p10 = Port(10, nxt={p11:{"delay": 0, "throughput": 10}})
 	p9 = Port(9, nxt={p11:{"delay": 0, "throughput": 5}})
 	p8 = Port(8, fr=[0], nxt={p10:{"delay": 1, "throughput": 10}})
@@ -137,7 +155,31 @@ if __name__ == "__main__":
 
 	# Give initial input to port 1 (all atomic predicates and total delay set to 0)
 
+	p1.input = {"fr": [0, 1, 2, 3], "total_delay": 0, "total_throughput": 10}'''
+
+	D = Destination(7)
+	C = Destination(8) 
+
+	p6 = Port(6, fr=[1], nxt={C:{"delay": 1, "throughput": 10}})
+	p5 = Port(5, fr=[0], nxt={D:{"delay": 1, "throughput": 5}})
+	p2 = Port(2, fr=[0], nxt={D:{"delay": 5, "throughput": 30}})
+
+
+	p4 = Port(4, nxt={p6:{"delay": 0, "throughput": 20}, p5:{"delay": 0, "throughput": 20}})
+	p3 = Port(3, fr=[0, 1, 2], nxt={p4:{"delay": 3, "throughput": 20}})
+	p1 = Port(1, nxt={p2:{"delay": 0, "throughput": 10}, p3:{"delay": 0, "throughput": 10}})
+
+	network = Network([p1, p2, p3, p4, p5, p6, D, C])
+	network.add_edge(p1, p2)
+	network.add_edge(p1, p3)
+	network.add_edge(p3, p4)
+	network.add_edge(p4, p5)
+	network.add_edge(p4, p6)
+	network.add_edge(p2, D)
+	network.add_edge(p5, D)
+	network.add_edge(p6, C)
+
 	p1.input = {"fr": [0, 1, 2, 3], "total_delay": 0, "total_throughput": 10}
 
 	# Print reachability tree which is basically Depth First Search
-	network.print_paths(p1.id, p11.id)
+	network.print_paths(p1.id, D.id)
