@@ -1,13 +1,15 @@
+import timeit
+from random import randint
 
 ################# HELPER FUNCTIONS ####################
 
 def print_aps(aps):
-	'''
+	"""
 	Gives serial number of atomic predicates
 	Example:
 	0 0*
 	1 10*
-	'''
+	"""
 	i = 0
 	for ap in aps:
 		print str(i) + " " + str(ap)
@@ -15,12 +17,12 @@ def print_aps(aps):
 
 ################## HEADER SPACE ALGEBRA #########################
 def complement(prefix):
-	'''
+	"""
 	Given a prefix, return its complement
 	Example:
 	0* -> [1*]
 	10* -> [0**, *1*]
-	'''
+	"""
 	neg = {"0": "1", "1": "0"}
 	result = []
 	star_str = "*" * len(prefix)
@@ -35,13 +37,13 @@ def complement(prefix):
 	return result
 
 def _intersection(bit1, bit2):
-	'''
+	"""
 	Helper function for intersection
 	Defines intersection of two bits
 	1/0 1/0 -> 1/0
 	1 0 -> z (empty)
 	1/0 * -> 1/0
-	'''
+	"""
 	if bit1 == bit2:
 		return bit1
 	elif bit1 == "*":
@@ -52,9 +54,9 @@ def _intersection(bit1, bit2):
 		return "z"
 
 def intersection(prefix1, prefix2):
-	'''
+	"""
 	Gives intersection of two prefixes based on rules above
-	'''
+	"""
 	result = ""
 	limit = min(len(prefix1), len(prefix2))
 	for i in range(limit):
@@ -70,16 +72,16 @@ def intersection(prefix1, prefix2):
 	return result
 
 def difference(prefix1, prefix2):
-	'''
+	"""
 	Gives difference: prefix2 - prefix1
 	ASSUMPTION: Prefix1 is only has 1 digit and rest stars
-	'''
+	"""
 	return intersection(prefix2, complement(prefix1)[0])
 
 def atomic_predicates(prefixes):
-	'''
+	"""
 	Gives atomic predicate set for given list of prefixes
-	'''
+	"""
 	# Sort prefixes based on increasing length
 	prefixes.sort(key=len)
 
@@ -112,10 +114,45 @@ def atomic_predicates(prefixes):
 		temp = []
 	return result
 
+
+###################3 For calculation of runtime #######################
+'''def generate_random_prefixes(n):
+	"""
+	Generate list of n random prefixes of length 10
+	"""
+	result = []
+	length = 10
+	while n > 0:
+		total_digits = randint(1, length)
+		prefix = ""
+		i = total_digits
+		while i > 0:
+			prefix += str(randint(0, 1))
+			i -= 1
+		prefix += "*" * (length - total_digits)
+		result.append(prefix)
+		n -= 1
+	return result'''
+
+
 if __name__ == "__main__":
-    # calculate forwarding rule atomic predicates
+
+	# calculate forwarding rule atomic predicates
     f_aps = atomic_predicates(["1**", "10*", "110*"])
 
     print "\nForwarding Rule APs"
     print_aps(f_aps)
     print "\n--------------------"
+
+    ### For calculation of runtime ###
+
+    '''elapsed_times = []
+    n = 5
+    while n > 0:
+	   prefixes = generate_random_prefixes(500)
+	   start_time = timeit.default_timer()
+	   print_aps(atomic_predicates(prefixes))
+	   elapsed = timeit.default_timer() - start_time
+	   elapsed_times.append(elapsed * 1000)
+	   n -= 1
+    print sum(elapsed_times)/len(elapsed_times)'''
